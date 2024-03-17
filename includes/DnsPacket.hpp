@@ -52,7 +52,6 @@ namespace DNS {
         int len;
         string data;
     };
-
     class Packet {
         friend ostream& operator<<(ostream& os, const Packet& packet);
         public:
