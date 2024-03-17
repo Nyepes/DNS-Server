@@ -3,7 +3,7 @@
 #include <sstream>
 #include <numeric>
 #include <cstring>
-
+#include <iostream>
 #define DNS_MAX_JUMPS 10
 using namespace DNS;
 using namespace std;
@@ -38,6 +38,9 @@ string PacketReader::read_range(int begin, int end) {
     }
     return result;
 }
+string PacketReader::read_next(int amount) { 
+    return read_range(buffer.pos, buffer.pos + amount);
+}
 void PacketReader::skip(int amount) {
     int new_position = amount + buffer.pos;
     check_range(new_position);
@@ -46,6 +49,28 @@ void PacketReader::skip(int amount) {
 char PacketReader::read_at(unsigned idx) {
     check_range(idx);
     return buffer.data[idx];
+}
+uint32_t PacketReader::read_next_4bytes() {
+    check_range(buffer.pos + 4);
+    uint32_t ans = 0;
+    for (int i = 0; i < 4; ++i) {
+        ans = ans << 8;
+        ans += buffer.data[buffer.pos] & 0xFF;
+        buffer.pos = buffer.pos + 1;
+
+    }
+    return ans;
+    
+}
+uint16_t PacketReader::read_next_2bytes() {
+    check_range(buffer.pos + 2);
+    uint16_t ans = 0;
+    for (int i = 0; i < 2; ++i) {
+        ans = ans << 8;
+        ans += buffer.data[buffer.pos] & 0xFF;
+        buffer.pos = buffer.pos + 1;
+    }
+    return ans;
 }
 string PacketReader::read_domain_name() {
     int position = buffer.pos;
@@ -72,9 +97,9 @@ string PacketReader::read_domain_name() {
     if ((buffer.data[buffer.pos] & 0xC0) == 0xC0) {
         buffer.pos += 2;
     } else {
-        buffer.pos += 1;
+        buffer.pos = position;
     }
-    
+
     name.pop_back();
     return name;
 
