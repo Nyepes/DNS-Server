@@ -40,7 +40,9 @@ string PacketReader::read_range(int begin, int end) {
     return result;
 }
 string PacketReader::read_next(int amount) { 
-    return read_range(buffer.pos, buffer.pos + amount);
+    string res = read_range(buffer.pos, buffer.pos + amount);
+    buffer.pos = buffer.pos + amount;
+    return res;
 }
 void PacketReader::skip(int amount) {
     int new_position = amount + buffer.pos;

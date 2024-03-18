@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "PacketReader.hpp"
-
+#include "PacketWriter.hpp"
 using namespace std;
 
 namespace DNS {
@@ -55,6 +55,10 @@ namespace DNS {
     class Packet {
         friend ostream& operator<<(ostream& os, const Packet& packet);
         public:
+            Packet(Packet& other);
+            Packet& operator=(Packet& rhs);
+            ~Packet();
+            Buffer& to_buffer(Buffer& buf);
             Packet(PacketReader& reader);
         private: 
             Header header;
@@ -77,5 +81,13 @@ namespace DNS {
             Pass in reader at start of record
             */
             void read_record(PacketReader& reader);
+
+            void write_header(PacketWriter& writer);
+            void write_question(PacketWriter& writer, Question& question);
+            void write_record(PacketWriter& writer, Record& record);
+
+            void del();
+            void copy_from_other(Packet& other);
+
     };
 }

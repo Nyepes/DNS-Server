@@ -10,7 +10,7 @@ using namespace std;
 
 namespace DNS {
     struct Buffer {
-        char data[DNS_PACKET_SIZE];
+        char data[DNS_PACKET_SIZE] = {0};
         int pos = 0;
     };
     class PacketReader {

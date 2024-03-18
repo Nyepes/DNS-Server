@@ -10,16 +10,26 @@ FetchContent_Declare(
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
+set(
+  FILES 
 
-add_executable(dns src/main.cpp src/DnsPacket.cpp src/PacketReader.cpp)
+  src/DnsPacket.cpp 
+  src/PacketReader.cpp
+  src/PacketWriter.cpp
+
+  )
+
+
+add_executable(dns src/main.cpp ${FILES})
 enable_testing()
-
+include_directories(includes)
 add_executable(
   test_exec
   tests/tests.cpp
+  ${FILES}
 )
 target_link_libraries(
-    test_exec
+  test_exec
   GTest::gtest_main
 )
 
