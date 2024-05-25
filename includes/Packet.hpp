@@ -15,8 +15,30 @@ enum ResultCode {
 };
 enum QueryType {
     UNKNOWN,
-    ANSWER = 1
+    A = 1, // Host Address
+    NS = 2, //Authoriative Name Server
+    MD = 3, // OBSOLETE (ERROR) 3 a mail destination (Obsolete - use MX)
+    MF = 4, // OBSOLETE (ERROR) a mail forwarder (Obsolete - use MX)
+    CNAME = 5, // the canonical name for an alias
+    SOA = 6, //marks the start of a zone of authority
+    MB = 7, // (DO NOT IMPLEMENT) a mailbox domain name (EXPERIMENTAL)
+    MG = 8, // (DO NOT IMPLEMENT) a mail group member (EXPERIMENTAL)
+    MR = 9, // (DO NOT IMPLEMENT) a mail rename domain name (EXPERIMENTAL)
+    NONE = 10, //(DO NOT IMPLEMENT) a null RR (EXPERIMENTAL)
+    WKS = 11, // a well known service description
+    PTR = 12, // a domain name pointer
+    HINFO = 13, // host information
+    MINFO = 14, // mailbox or mail list information
+    MX = 15, // mail exchange
+    TXT = 16, // text strings
+    AAAA = 28,
+    // Only For Type in Record Class
+    AXFR = 252, // A request for a transfer of an entire zone
+    MAILB = 253, // A request for mailbox-related records (MB, MG or MR)
+    MAILA = 254, // A request for mail agent RRs (Obsolete - see MX)
+    ALL = 255 // A request for all records
 };
+
 struct Header {
     uint16_t id = 0;
     int opcode = 0;

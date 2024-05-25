@@ -2,6 +2,8 @@
 #include <cassert>
 #include <iostream>
 
+/* PART 1: Parser Tests */
+
 /*Creating Request Packet From buffer*/
 int test1() {
     char buffer[512];
@@ -77,7 +79,7 @@ int test3() {
     // packet.header.answer_count = 1;
     packet.questions.push_back(Question());
     packet.questions.at(0).name = "youtube.com";
-    packet.questions.at(0).type = ANSWER;
+    packet.questions.at(0).type = A;
     packet.questions.at(0).question_class = 1;
     packet.answers.push_back(Record());
     // packet.answers.at(0).domain_name = "youtube.com";
@@ -111,7 +113,7 @@ int test4() {
 
     packet.questions.push_back(Question());
     packet.questions.at(0).name = "yahoo.com";
-    packet.questions.at(0).type = ANSWER;
+    packet.questions.at(0).type = A;
     packet.questions.at(0).question_class = 1;
 
     Record r4;
@@ -188,6 +190,8 @@ int test4() {
     return 0;
 }
 
+
+/* PART2: SERVER TESTS*/
 int main(int argc, char** argv) {
     test1();
     test2();

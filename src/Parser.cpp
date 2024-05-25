@@ -204,17 +204,12 @@ void readQuestion(Packet& packet, char* buffer, int& idx) {
 }
 Record readRecord(int& idx, char* buffer) {
     Record record;
-    record.domain_name = readName(buffer, idx);//reader.read_domain_name();
+    record.domain_name = readName(buffer, idx); //reader.read_domain_name();
     record.type = QueryType(readShort(buffer, idx));
-
     record.record_class = readShort(buffer, idx);
-
     record.time_to_live = readInt(buffer, idx);
-
     record.len = readShort(buffer, idx);
-
     record.data = std::string(buffer + idx, record.len);//reader.read_next(record.len);
-
     idx += record.len;
     return record;
 }
