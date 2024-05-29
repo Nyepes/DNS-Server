@@ -1,7 +1,7 @@
 #include "Resolver.hpp"
 #include "ServerClientShared.hpp"
 
-
+#include <cstdlib>
 #include <string.h>
 #include <iostream>
 
@@ -11,7 +11,6 @@ Resolver::Resolver() {
 void Resolver::startResolver() {
     server_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (server_socket < 0) {
-        std::cout << "Creating Socket" << std::endl;
         perror(NULL);
         exit(1);
     }
@@ -33,13 +32,11 @@ void Resolver::acceptMessage() {
     // int connection_fd = socket();
     char packet_data[PACKET_SIZE];
     while (1) {
-        std::cout << "Waiting" << std::endl;
         handleClient();
     }
 }
 void Resolver::handleClient() {
     Packet packet = getClientRespones();
-    std::cout << "Recieved" << std::endl;
     ssize_t size = getClientPacket(packet);
     char packet_data[512];
     Parser::toBuffer(packet, packet_data);
@@ -48,17 +45,62 @@ void Resolver::handleClient() {
 }
 /* Recursive Resolve */
 ssize_t Resolver::getClientPacket(Packet& p) {
+    // p.header.id = 10000;
+    // p.header.additional_records_count = 0;
+    // p.header.answer_count = 0;
+    // p.header.question_count = 1;
+    // p.header.authority_count = 0;
+
+    // p.header.authorative_answer = 0;
+    // p.header.opcode = 0;
+    // p.header.query_response = 0;
+    // p.header.recursion_desired = 1;
+    // p.header.result_code = ResultCode::NO_ERROR;
+    // p.header.recursion_available = 0;
+    // p.header.truncated_message = 0;
+    // p.header.reserved = 0;
+    // p.questions.at(0).name = "www.google.com";
+    // p.questions.at(0).question_class = 1;
+    // p.questions.at(0).type = QueryType(1);
+
     std::string domain_name = p.questions.at(0).name;
-    struct sockaddr_in addr_info = getAddrInfoClient(53, "8.8.8.8");
-    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    std::string name_server = "198.41.0.4";
     char data[PACKET_SIZE];
-    Parser::toBuffer(p, data);
-    socklen_t addr_info_len = sizeof(addr_info);
-    sendto(sock, data, PACKET_SIZE, 0, (struct sockaddr*)&addr_info, sizeof(addr_info));
-    ssize_t bytes = recvfrom(sock, data, PACKET_SIZE, 0, (struct sockaddr*)&addr_info, &addr_info_len);
-    p = Parser::fromBuffer(data);
-    return bytes;
-    // int sendto(int sockfd, const void *msg, int len, unsigned int flags, const struct sockaddr *to, socklen_t tolen);
+    char answers[PACKET_SIZE];
+    int bufferSize = Parser::toBuffer(p, data);
+    Record answer; 
+    ((uint16_t*)data)[1]= htons(((uint16_t*)data)[1]);
+    while (1) {
+        struct sockaddr_in addr_info = getAddrInfoClient(53, name_server);
+        socklen_t addr_info_len = sizeof(addr_info);
+        int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        ssize_t sent = sendto(sock, data, bufferSize, 0, (struct sockaddr*)&addr_info, addr_info_len);
+        ssize_t bytes = recvfrom(sock, answers, PACKET_SIZE, 0, (struct sockaddr*)&addr_info, &addr_info_len);
+        Packet answerPacket = Parser::fromBuffer(answers);
+        if (answerPacket.header.answer_count >= 1) {
+            answer = answerPacket.answers.at(0);
+            break;
+        }
+        const auto& additional_records = answerPacket.additional_records;
+        // int rand_idx = 0 % additional_records.size();
+        
+        int idx = 0;
+        for (int i = 0; i < additional_records.size(); ++i) {
+            if (additional_records.at(i).type == QueryType::A) {
+                idx = i;
+            }
+        }
+        const std::string& data = additional_records.at(idx).data;
+        name_server = "";
+        for (const auto& character: data) {
+            name_server += std::to_string((uint8_t)(character));
+            name_server.push_back('.');
+        }
+        name_server.pop_back();
+    }
+    p.answers.push_back(answer);
+    p.header.answer_count += 1;
+    return PACKET_SIZE;
 }
 
 Packet Resolver::getClientRespones() {

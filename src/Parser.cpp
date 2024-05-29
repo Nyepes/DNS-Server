@@ -99,14 +99,14 @@ void writeAllRecords(const Packet& packet, int& idx, char* out, std::unordered_m
         writeRecord(additional_records, idx, out, dn_idx);
     }
 }
-void Parser::toBuffer(const Packet& packet, char out[PACKET_SIZE]) {
+int Parser::toBuffer(const Packet& packet, char out[PACKET_SIZE]) {
     int idx = 0;
     writeHeader(packet, idx, out);
     std::unordered_map<std::string, int> domain_name_indexes;
-
     writeQuestions(packet, idx, out, domain_name_indexes);
     writeAllRecords(packet, idx, out, domain_name_indexes);
-
+    return idx;
+    // std::cout << "idx: " << idx << std::endl;
 }
 
 
@@ -218,12 +218,13 @@ int readAllRecords(Packet& packet, char* buffer, int& idx) {
     packet.answers.resize(packet.header.answer_count);
     packet.authorities.resize(packet.header.authority_count);
     packet.additional_records.resize(packet.header.additional_records_count);
+    // std::cout << packet.answers.size() << " " << packet.authorities.size() << " " << packet.additional_records.size() << " " << std::endl;
     for (int i = 0; i < packet.answers.size(); ++i) {
         packet.answers.at(i) = readRecord(idx, buffer);
     }
 
     for (int i = 0; i < packet.authorities.size(); ++i) {
-        packet.authorities.at(i) = readRecord(idx, buffer);
+        packet.authorities.at(i) = readRecord(idx, buffer); 
     }
 
 

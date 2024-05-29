@@ -62,6 +62,8 @@ int test2() {
     assert(packet.answers.at(0).len == 4);
     assert(packet.answers.at(0).record_class == 1);
     assert(packet.answers.at(0).type == 1);
+    // std::cout << packet.answers.at(0).data << std::endl;
+    // assert(packet.answers.at(0).data == "142.250.190.46");
     assert(packet.answers.at(0).data.at(0) == (char)142);
     assert(packet.answers.at(0).data.at(1) == (char)250);
     assert(packet.answers.at(0).data.at(2) == (char)190);
@@ -73,20 +75,13 @@ int test2() {
 int test3() {
     Packet packet;
     packet.header.id = 10000;
-    // packet.header.query_response = 0;
     packet.header.recursion_desired = 1;
     packet.header.question_count = 1;
-    // packet.header.answer_count = 1;
     packet.questions.push_back(Question());
     packet.questions.at(0).name = "youtube.com";
     packet.questions.at(0).type = A;
     packet.questions.at(0).question_class = 1;
     packet.answers.push_back(Record());
-    // packet.answers.at(0).domain_name = "youtube.com";
-    // packet.answers.at(0).len = 4;
-    // packet.answers.at(0).record_class = 1;
-    // packet.answers.at(0).type = 1;
-    // packet.answers.at(0).data = {(char)142, (char)250, (char)190, (char)46};
     char ans[] = 
     {
         char(0x27), char(0x10), char(0x01), char(0x00), char(0x00), char(0x01), char(0x00), char(0x00), char(0x00), char(0x00), 

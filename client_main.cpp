@@ -2,7 +2,10 @@
 #include <iostream>
 
 int main(int argc, char** argv) {
-    std::string s = "google.com";
-    // Client::queryDNS(s);
-    std::cout << Client::queryDNS(s) << std::endl;
+    std::string s = "www.google.com";
+    s = Client::queryDNS(s);
+    for (const auto& ch: s) {
+        std::cout << std::to_string((uint8_t)(ch)) << '.';
+    }
+    printf("%c\n", 8);
 }
