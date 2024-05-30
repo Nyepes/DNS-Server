@@ -45,41 +45,30 @@ void Resolver::handleClient() {
 }
 /* Recursive Resolve */
 ssize_t Resolver::getClientPacket(Packet& p) {
-    // p.header.id = 10000;
-    // p.header.additional_records_count = 0;
-    // p.header.answer_count = 0;
-    // p.header.question_count = 1;
-    // p.header.authority_count = 0;
-
-    // p.header.authorative_answer = 0;
-    // p.header.opcode = 0;
-    // p.header.query_response = 0;
-    // p.header.recursion_desired = 1;
-    // p.header.result_code = ResultCode::NO_ERROR;
-    // p.header.recursion_available = 0;
-    // p.header.truncated_message = 0;
-    // p.header.reserved = 0;
-    // p.questions.at(0).name = "www.google.com";
-    // p.questions.at(0).question_class = 1;
-    // p.questions.at(0).type = QueryType(1);
-
     std::string domain_name = p.questions.at(0).name;
-    std::string name_server = "198.41.0.4";
+    std::string name_server = "192.5.6.30";
     char data[PACKET_SIZE];
     char answers[PACKET_SIZE];
     int bufferSize = Parser::toBuffer(p, data);
     Record answer; 
     ((uint16_t*)data)[1]= htons(((uint16_t*)data)[1]);
     while (1) {
+        std::cout << "Looking" << std::endl;
         struct sockaddr_in addr_info = getAddrInfoClient(53, name_server);
         socklen_t addr_info_len = sizeof(addr_info);
         int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         ssize_t sent = sendto(sock, data, bufferSize, 0, (struct sockaddr*)&addr_info, addr_info_len);
         ssize_t bytes = recvfrom(sock, answers, PACKET_SIZE, 0, (struct sockaddr*)&addr_info, &addr_info_len);
         Packet answerPacket = Parser::fromBuffer(answers);
-        if (answerPacket.header.answer_count >= 1) {
+
+        if (answerPacket.header.answer_count >= 1 && answerPacket.answers.at(0).type == QueryType::A) {
             answer = answerPacket.answers.at(0);
             break;
+        } 
+        if (answerPacket.header.answer_count >= 1 && answerPacket.answers.at(0).type == QueryType::CNAME) {
+            p.questions.at(0).name = answerPacket.answers.at(0).data;
+            bufferSize = Parser::toBuffer(p, data);
+            continue;
         }
         const auto& additional_records = answerPacket.additional_records;
         // int rand_idx = 0 % additional_records.size();
@@ -90,14 +79,13 @@ ssize_t Resolver::getClientPacket(Packet& p) {
                 idx = i;
             }
         }
-        const std::string& data = additional_records.at(idx).data;
-        name_server = "";
-        for (const auto& character: data) {
-            name_server += std::to_string((uint8_t)(character));
-            name_server.push_back('.');
-        }
-        name_server.pop_back();
+        std::cout << "Hello" << std::endl;
+        name_server = additional_records.at(idx).data;
+        // name_server = data;
+        std::cout << name_server << std::endl;
     }
+    std::cout << "done" << std::endl;
+    std::cout <<answer.data << std::endl;
     p.answers.push_back(answer);
     p.header.answer_count += 1;
     return PACKET_SIZE;

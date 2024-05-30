@@ -75,15 +75,40 @@ void writeQuestions(const Packet& packet, int& idx, char* out, std::unordered_ma
     }
 }
 void writeRecord(const Record& record, int& idx, char* out, std::unordered_map<std::string, int>& dn_idx) {
+    std::cout << "wiriting" << std::endl;
     writeString(out, idx, record.domain_name, dn_idx);
     setShort(out, idx, record.type);
     setShort(out, idx, record.record_class);
     setInt(out, idx, record.time_to_live);
     setShort(out, idx, record.len);
-    // Todo Support more Record Types
-    const char* data = record.data.c_str();
-    memcpy(out + idx, data, record.data.size());
-    idx += record.data.size();
+    std::cout << "TYpe: " << record.type << std::endl;
+    if (record.type == QueryType::A) {
+        std::cout << "Typr1" << record.data.size() << std::endl;
+        std::string cur = "";
+        for (int i = 0; i < record.data.size(); ++i) {
+            // std::cout << i << std::endl;
+            char character = record.data.at(i);
+            if (character == '.') {
+                out[idx++] = (char)std::atoi(cur.c_str());
+                // std::cout << "RES: " << std::atoi(cur.c_str()) << std::endl; 
+                cur = "";
+            } else {
+                cur += character;
+            }
+
+        //     name_server += std::to_string((uint8_t)(character));
+        //     name_server.push_back('.');
+        }
+        out[idx++] = (char)std::atoi(cur.c_str());
+        // name_server.pop_back();
+
+        
+    } else if (record.type == QueryType::AAAA) {
+        memcpy(out + idx, record.data.c_str(), record.data.size());
+        idx += record.data.size();
+    } else {
+        writeString(out, idx, record.data, dn_idx);
+    }
 }
 void writeAllRecords(const Packet& packet, int& idx, char* out, std::unordered_map<std::string, int>& dn_idx) {
 
@@ -106,7 +131,6 @@ int Parser::toBuffer(const Packet& packet, char out[PACKET_SIZE]) {
     writeQuestions(packet, idx, out, domain_name_indexes);
     writeAllRecords(packet, idx, out, domain_name_indexes);
     return idx;
-    // std::cout << "idx: " << idx << std::endl;
 }
 
 
@@ -203,14 +227,40 @@ void readQuestion(Packet& packet, char* buffer, int& idx) {
     }
 }
 Record readRecord(int& idx, char* buffer) {
+    std::cout << "rr" << std::endl;
     Record record;
     record.domain_name = readName(buffer, idx); //reader.read_domain_name();
     record.type = QueryType(readShort(buffer, idx));
     record.record_class = readShort(buffer, idx);
     record.time_to_live = readInt(buffer, idx);
     record.len = readShort(buffer, idx);
-    record.data = std::string(buffer + idx, record.len);//reader.read_next(record.len);
-    idx += record.len;
+    std::string data = std::string(buffer + idx, record.len);//reader.read_next(record.len);
+    if (record.type == QueryType::A) {
+        std::cout << "A" << std::endl;
+        std::string name_server = "";
+        for (const auto& character: data) {
+            name_server += std::to_string((uint8_t)(character));
+            name_server.push_back('.');
+        }
+        name_server.pop_back();
+        record.data = name_server;
+        idx += record.len;
+        // name_server.pop_back();
+
+        
+    } else if (record.type == QueryType::CNAME) {
+        std::cout << "CNAME?" << std::endl;
+        record.data = readName(buffer, idx);
+        std::cout << record.data << std::endl; 
+
+        
+        // memcpy(buffer + idx, record.data.c_str(), record.len);
+        // idx += record.len;
+    } else {
+        std::cout << "AAAA" << std::endl;
+        record.data = std::string(buffer + idx, record.len);//reader.read_next(record.len);
+        idx += record.len;
+    }
     return record;
 }
 int readAllRecords(Packet& packet, char* buffer, int& idx) {

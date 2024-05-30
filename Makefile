@@ -8,11 +8,11 @@ bin/test_dns: ./src/*.cpp ./includes/*.hpp test.cpp
 
 server: bin/server
 bin/server: ./src/*.cpp ./includes/*.hpp server_main.cpp 
-		$(CXX) $(CXXFLAGS) includes/*.hpp ./src/*.cpp server_main.cpp -O3 -o $@
+		$(CXX) $(CXXFLAGS) includes/*.hpp ./src/*.cpp server_main.cpp -O0 -o $@
 
 client: bin/client
 bin/client: ./src/*.cpp ./includes/*.hpp client_main.cpp 
-		$(CXX) $(CXXFLAGS) includes/*.hpp ./src/*.cpp client_main.cpp -O3 -o $@
+		$(CXX) $(CXXFLAGS) includes/*.hpp ./src/*.cpp client_main.cpp -O0 -o $@
 
 debug: bin/debug
 bin/debug: ./src/*.cpp ./includes/*.hpp test.cpp

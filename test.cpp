@@ -63,11 +63,11 @@ int test2() {
     assert(packet.answers.at(0).record_class == 1);
     assert(packet.answers.at(0).type == 1);
     // std::cout << packet.answers.at(0).data << std::endl;
-    // assert(packet.answers.at(0).data == "142.250.190.46");
-    assert(packet.answers.at(0).data.at(0) == (char)142);
-    assert(packet.answers.at(0).data.at(1) == (char)250);
-    assert(packet.answers.at(0).data.at(2) == (char)190);
-    assert(packet.answers.at(0).data.at(3) == (char)46);
+    assert(packet.answers.at(0).data == "142.250.190.46");
+    // assert(packet.answers.at(0).data.at(0) == (char)142);
+    // assert(packet.answers.at(0).data.at(1) == (char)250);
+    // assert(packet.answers.at(0).data.at(2) == (char)190);
+    // assert(packet.answers.at(0).data.at(3) == (char)46);
 
     return 0;
 }
@@ -108,12 +108,12 @@ int test4() {
 
     packet.questions.push_back(Question());
     packet.questions.at(0).name = "yahoo.com";
-    packet.questions.at(0).type = A;
+    packet.questions.at(0).type = QueryType::A;
     packet.questions.at(0).question_class = 1;
 
     Record r4;
     r4.domain_name = "yahoo.com";
-    r4.data = {char(74), char(6), char(143), char(25)};
+    r4.data = "74.6.143.25";//{char(74), char(6), char(143), char(25)};
     r4.len = 4;
     r4.record_class = 1;
     r4.type = 1;
@@ -122,7 +122,7 @@ int test4() {
 
     Record r6;
     r6.domain_name = "yahoo.com";
-    r6.data = {char(74), char(6), char(143), char(26)};
+    r6.data = "74.6.143.26";//{char(74), char(6), char(143), char(26)};
     r6.len = 4;
     r6.record_class = 1;
     r6.type = 1;
@@ -132,7 +132,7 @@ int test4() {
 
     Record r2;
     r2.domain_name = "yahoo.com";
-    r2.data = {char(98), char(137), char(11), char(163)};
+    r2.data = "98.137.11.163";//{char(98), char(137), char(11), char(163)};
     r2.len = 4;
     r2.record_class = 1;
     r2.type = 1;
@@ -141,7 +141,7 @@ int test4() {
 
     Record r3;
     r3.domain_name = "yahoo.com";
-    r3.data = {char(74), char(6), char(231), char(21)};
+    r3.data = "74.6.231.21";//{char(74), char(6), char(231), char(21)};
     r3.len = 4;
     r3.record_class = 1;
     r3.type = 1;
@@ -150,7 +150,7 @@ int test4() {
 
     Record r5;
     r5.domain_name = "yahoo.com";
-    r5.data = {char(74), char(6), char(231), char(20)};
+    r5.data = "74.6.231.20";//{char(74), char(6), char(231), char(20)};
     r5.len = 4;
     r5.record_class = 1;
     r5.type = 1;
@@ -159,7 +159,7 @@ int test4() {
 
     Record r1;
     r1.domain_name = "yahoo.com";
-    r1.data = {char(98), char(137), char(11), char(164)};
+    r1.data = "98.137.11.164";//{char(98), char(137), char(11), char(164)};
     r1.len = 4;
     r1.record_class = 1;
     r1.type = 1;
@@ -180,6 +180,7 @@ int test4() {
     char buf[512];
     Parser::toBuffer(packet, buf);
     for (int i = 0; i < 123; ++i) {
+        std::cout << std::hex << i << " " << std::to_string((uint8_t)ans[i]) << " " << std::to_string((uint8_t)buf[i]) << std::endl;
         assert(ans[i] == buf[i]);
     }
     return 0;
@@ -191,6 +192,7 @@ int main(int argc, char** argv) {
     test1();
     test2();
     test3();
+    std::cout << "\nTEST4\n";
     test4();
     printf("Succes!\n");
     return 0;
