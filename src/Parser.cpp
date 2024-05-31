@@ -75,22 +75,17 @@ void writeQuestions(const Packet& packet, int& idx, char* out, std::unordered_ma
     }
 }
 void writeRecord(const Record& record, int& idx, char* out, std::unordered_map<std::string, int>& dn_idx) {
-    std::cout << "wiriting" << std::endl;
     writeString(out, idx, record.domain_name, dn_idx);
     setShort(out, idx, record.type);
     setShort(out, idx, record.record_class);
     setInt(out, idx, record.time_to_live);
     setShort(out, idx, record.len);
-    std::cout << "TYpe: " << record.type << std::endl;
     if (record.type == QueryType::A) {
-        std::cout << "Typr1" << record.data.size() << std::endl;
         std::string cur = "";
         for (int i = 0; i < record.data.size(); ++i) {
-            // std::cout << i << std::endl;
             char character = record.data.at(i);
             if (character == '.') {
                 out[idx++] = (char)std::atoi(cur.c_str());
-                // std::cout << "RES: " << std::atoi(cur.c_str()) << std::endl; 
                 cur = "";
             } else {
                 cur += character;
@@ -165,32 +160,41 @@ int32_t readInt(char* data, int& index) {
 
 #define DNS_MAX_JUMPS 10
 std::string readName(char* buffer, int& index) {
+    // "dual-gslb.spotify.com"
     int position = index;
     std::string name;
-    bool jumped = true;
+    bool jumped = false;
     int num_jumps = 0;
 
     while (1) {
         uint8_t length = readByte(buffer, position);
         if (length == 0) break;
         if ((length & 0xC0) == 0xC0) { // Upper two bits are set
+            if (!jumped) {
+                index += 2;
+            }
             uint8_t next_byte = readByte(buffer, position);
             if (num_jumps >= DNS_MAX_JUMPS) return "";
             position = (((uint16_t)length ^ 0xC0) << 8) + next_byte;
             jumped = true;
             num_jumps++;
         } else {
-            jumped = false;
             name += std::string(buffer + position, length);
             name += ".";
             position += length;
+            if (!jumped) {
+                index = position;
+            }
         }
     }
-    if ((buffer[index] & 0xC0) == 0xC0) {
-        index += 2;
-    } else {
+    if (!jumped) {
         index = position;
     }
+    // if ((buffer[index] & 0xC0) == 0xC0) {
+    //     index += 2;
+    // } else {
+    //     index = position;
+    // }
     name.pop_back();
     return name;
 }
@@ -227,7 +231,6 @@ void readQuestion(Packet& packet, char* buffer, int& idx) {
     }
 }
 Record readRecord(int& idx, char* buffer) {
-    std::cout << "rr" << std::endl;
     Record record;
     record.domain_name = readName(buffer, idx); //reader.read_domain_name();
     record.type = QueryType(readShort(buffer, idx));
@@ -236,7 +239,6 @@ Record readRecord(int& idx, char* buffer) {
     record.len = readShort(buffer, idx);
     std::string data = std::string(buffer + idx, record.len);//reader.read_next(record.len);
     if (record.type == QueryType::A) {
-        std::cout << "A" << std::endl;
         std::string name_server = "";
         for (const auto& character: data) {
             name_server += std::to_string((uint8_t)(character));
@@ -248,16 +250,13 @@ Record readRecord(int& idx, char* buffer) {
         // name_server.pop_back();
 
         
-    } else if (record.type == QueryType::CNAME) {
-        std::cout << "CNAME?" << std::endl;
+    } else if (record.type != QueryType::AAAA) {
         record.data = readName(buffer, idx);
-        std::cout << record.data << std::endl; 
 
         
         // memcpy(buffer + idx, record.data.c_str(), record.len);
         // idx += record.len;
     } else {
-        std::cout << "AAAA" << std::endl;
         record.data = std::string(buffer + idx, record.len);//reader.read_next(record.len);
         idx += record.len;
     }
@@ -268,19 +267,19 @@ int readAllRecords(Packet& packet, char* buffer, int& idx) {
     packet.answers.resize(packet.header.answer_count);
     packet.authorities.resize(packet.header.authority_count);
     packet.additional_records.resize(packet.header.additional_records_count);
-    // std::cout << packet.answers.size() << " " << packet.authorities.size() << " " << packet.additional_records.size() << " " << std::endl;
     for (int i = 0; i < packet.answers.size(); ++i) {
         packet.answers.at(i) = readRecord(idx, buffer);
     }
-
     for (int i = 0; i < packet.authorities.size(); ++i) {
         packet.authorities.at(i) = readRecord(idx, buffer); 
     }
 
 
+
     for (int i = 0; i < packet.additional_records.size(); ++i) {
         packet.additional_records.at(i) = readRecord(idx, buffer);
     }
+
 
     return idx;
 }
@@ -289,7 +288,6 @@ Packet Parser::fromBuffer(char buffer[PACKET_SIZE]) {
 
     int index = 0;
     readHeader(packet, buffer, index);
-
     readQuestion(packet, buffer, index);
     readAllRecords(packet, buffer, index);
 

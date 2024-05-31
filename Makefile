@@ -17,6 +17,10 @@ bin/client: ./src/*.cpp ./includes/*.hpp client_main.cpp
 debug: bin/debug
 bin/debug: ./src/*.cpp ./includes/*.hpp test.cpp
 		$(CXX) $(CXXFLAGS) includes/*.hpp ./src/*.cpp test.cpp -g -o $@
+
+server_debug: bin/server_debug
+bin/server_debug: ./src/*.cpp ./includes/*.hpp server_main.cpp 
+		$(CXX) $(CXXFLAGS) includes/*.hpp ./src/*.cpp server_main.cpp -O0 -g -o $@
 # 
 .DEFAULT_GOAL := test_dns
 # clean:

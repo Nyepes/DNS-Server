@@ -51,9 +51,8 @@ ssize_t Resolver::getClientPacket(Packet& p) {
     char answers[PACKET_SIZE];
     int bufferSize = Parser::toBuffer(p, data);
     Record answer; 
-    ((uint16_t*)data)[1]= htons(((uint16_t*)data)[1]);
     while (1) {
-        std::cout << "Looking" << std::endl;
+        std::cout << "Name Server: " << name_server << std::endl;
         struct sockaddr_in addr_info = getAddrInfoClient(53, name_server);
         socklen_t addr_info_len = sizeof(addr_info);
         int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -67,25 +66,34 @@ ssize_t Resolver::getClientPacket(Packet& p) {
         } 
         if (answerPacket.header.answer_count >= 1 && answerPacket.answers.at(0).type == QueryType::CNAME) {
             p.questions.at(0).name = answerPacket.answers.at(0).data;
-            bufferSize = Parser::toBuffer(p, data);
-            continue;
+            std::cout << "CNAME: " << p.questions.at(0).name << std::endl;
+
+            return getClientPacket(p);
         }
-        const auto& additional_records = answerPacket.additional_records;
-        // int rand_idx = 0 % additional_records.size();
-        
-        int idx = 0;
-        for (int i = 0; i < additional_records.size(); ++i) {
-            if (additional_records.at(i).type == QueryType::A) {
-                idx = i;
+        if (answerPacket.additional_records.size() >= 1) {
+            const auto& additional_records = answerPacket.additional_records;        
+            int idx = 0;
+            for (int i = 0; i < additional_records.size(); ++i) {
+                if (additional_records.at(i).type == QueryType::A) {
+                    idx = i;
+                }
             }
+            name_server = additional_records.at(idx).data;
+        } else {
+            std::cout << "Finsding Authorative IP" << answerPacket.authorities.at(0).data << std::endl;
+            Packet queryAuthorativeIP;
+            queryAuthorativeIP.header.id = 10000;
+            queryAuthorativeIP.header.question_count = 1;
+            Question query;
+            query.name = answerPacket.authorities.at(0).data;
+            query.question_class = 1;
+            query.type = QueryType::A;
+            queryAuthorativeIP.questions.push_back(query);
+
+            getClientPacket(queryAuthorativeIP);
+            name_server = queryAuthorativeIP.answers.at(0).data;
         }
-        std::cout << "Hello" << std::endl;
-        name_server = additional_records.at(idx).data;
-        // name_server = data;
-        std::cout << name_server << std::endl;
     }
-    std::cout << "done" << std::endl;
-    std::cout <<answer.data << std::endl;
     p.answers.push_back(answer);
     p.header.answer_count += 1;
     return PACKET_SIZE;
