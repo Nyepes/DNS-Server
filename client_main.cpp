@@ -1,5 +1,6 @@
 #include "Client.hpp"
 #include <iostream>
+#include <unistd.h>
 
 int main(int argc, char** argv) {
     if (argc != 2) {
@@ -8,8 +9,10 @@ int main(int argc, char** argv) {
     }
     std::string s = argv[1];
     s = Client::queryDNS(s);
-    for (const auto& ch: s) {
-        std::cout << std::to_string((uint8_t)(ch)) << '.';
-    }
+    std::cout << s << std::endl;
+    // sleep(20);
+    // s = Client::queryDNS(s);
+
+
     printf("%c\n", 8);
 }

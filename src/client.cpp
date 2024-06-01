@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <iostream>
+#include <unistd.h>
 
 #define DNS_PORT 2048
 #define SERVER_IP "127.0.0.1"
@@ -27,25 +28,11 @@ std::string Client::queryDNS(std::string name) {
     char buffer[PACKET_SIZE];
     Parser::toBuffer(dns_packet, buffer);
     socklen_t len = sizeof(address_info);
-    // std::cout << "Sending" << std::endl;
-    sendto(connection_socket, buffer, PACKET_SIZE, 0, (struct sockaddr*)&address_info, len);
-    // std::cout << "Waiting" << std::endl;
-    ssize_t size = recvfrom(connection_socket, buffer, PACKET_SIZE, 0, (struct sockaddr*)&address_info, &len);
-    // std::cout << "Size: " << size << std::endl;
-    Packet p = Parser::fromBuffer(buffer);
-    // std::cout << "ID: " << p.header.id << std::endl;
-    // std::cout << "Z: " << p.header.reserved << std::endl; 
-    // std::cout << "RA: " << p.header.recursion_available << std::endl;
-    // std::cout << "RD: " << p.header.recursion_desired << std::endl;
-    // std::cout << "OPCODE: " << p.header.opcode << std::endl;
-    // std::cout << "TC: " << p.header.truncated_message << std::endl;
-    // std::cout << "QR: " << p.header.query_response << std::endl;
-    // std::cout <<  "Return Code " << p.header.result_code << std::endl;
-    // std::cout <<  "Question Count " << p.header.question_count << std::endl;
-    // std::cout <<  "AnswerCount " << p.header.answer_count << std::endl;
-    // std::cout <<  "authorities Count " << p.header.authority_count << std::endl;
-    // std::cout <<  "Additional Count " << p.header.additional_records_count << std::endl;
 
+    sendto(connection_socket, buffer, PACKET_SIZE, 0, (struct sockaddr*)&address_info, len);
+    ssize_t size = recvfrom(connection_socket, buffer, PACKET_SIZE, 0, (struct sockaddr*)&address_info, &len);
+    Packet p = Parser::fromBuffer(buffer);
+    close(connection_socket);
     return p.answers.at(0).data;
 
 }

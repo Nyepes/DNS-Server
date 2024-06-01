@@ -247,15 +247,8 @@ Record readRecord(int& idx, char* buffer) {
         name_server.pop_back();
         record.data = name_server;
         idx += record.len;
-        // name_server.pop_back();
-
-        
     } else if (record.type != QueryType::AAAA) {
         record.data = readName(buffer, idx);
-
-        
-        // memcpy(buffer + idx, record.data.c_str(), record.len);
-        // idx += record.len;
     } else {
         record.data = std::string(buffer + idx, record.len);//reader.read_next(record.len);
         idx += record.len;
@@ -263,19 +256,29 @@ Record readRecord(int& idx, char* buffer) {
     return record;
 }
 int readAllRecords(Packet& packet, char* buffer, int& idx) {
+    std::cout << packet.header.question_count << std::endl;
+    std::cout << packet.header.answer_count << std::endl;
+    std::cout << packet.header.authority_count << std::endl;
+    std::cout << packet.header.additional_records_count << std::endl;
 
     packet.answers.resize(packet.header.answer_count);
     packet.authorities.resize(packet.header.authority_count);
     packet.additional_records.resize(packet.header.additional_records_count);
+
+    std::cout << "QSIZE: " << packet.header.question_count << std::endl;
     for (int i = 0; i < packet.answers.size(); ++i) {
         packet.answers.at(i) = readRecord(idx, buffer);
     }
+    std::cout << packet.header.question_count << std::endl;
+    std::cout << packet.header.answer_count << std::endl;
+    std::cout << packet.header.authority_count << std::endl;
+    std::cout << packet.header.additional_records_count << std::endl;
+
+    std::cout << "AUSIZE: " << packet.header.authority_count << std::endl;
     for (int i = 0; i < packet.authorities.size(); ++i) {
         packet.authorities.at(i) = readRecord(idx, buffer); 
     }
-
-
-
+    std::cout << "ADDSIZE: " << packet.header.additional_records_count << std::endl;
     for (int i = 0; i < packet.additional_records.size(); ++i) {
         packet.additional_records.at(i) = readRecord(idx, buffer);
     }
@@ -287,9 +290,25 @@ Packet Parser::fromBuffer(char buffer[PACKET_SIZE]) {
     Packet packet;
 
     int index = 0;
+    std::cout << "Header" << std::endl;
     readHeader(packet, buffer, index);
+
+    std::cout << packet.header.question_count << std::endl;
+    std::cout << packet.header.answer_count << std::endl;
+    std::cout << packet.header.authority_count << std::endl;
+    std::cout << packet.header.additional_records_count << std::endl;
+
+    std::cout << "Q" << std::endl;
+
     readQuestion(packet, buffer, index);
+    std::cout << packet.header.question_count << std::endl;
+    std::cout << packet.header.answer_count << std::endl;
+    std::cout << packet.header.authority_count << std::endl;
+    std::cout << packet.header.additional_records_count << std::endl;
+    std::cout << "R" << std::endl;
+    
     readAllRecords(packet, buffer, index);
+    std::cout << "D" << std::endl;
 
 
     return packet;
